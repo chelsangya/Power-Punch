@@ -1,0 +1,4 @@
+pygame
+pyserial
+pymongo
+python-dotenv
