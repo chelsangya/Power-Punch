@@ -49,7 +49,7 @@ A modern boxing game with force sensors, real-time scoring, MongoDB-powered lead
 
 2. **Database Setup - MongoDB Atlas:**
 
-   ✅ **Good news!** The game is already configured to use MongoDB Atlas (cloud database).
+   The game is already configured to use MongoDB Atlas (cloud database).
    No local MongoDB installation required!
 
    The game will automatically connect to the cloud database at:
