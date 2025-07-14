@@ -1,12 +1,28 @@
 import pygame
 import time
 import sys
+import os
 
 def animate_punch_score(screen, target_score, screen_width, screen_height, fonts):
     """
     Animate the punch score like a real punching bag
     Returns when animation is complete
     """
+    # Initialize pygame mixer if not already initialized
+    if not pygame.mixer.get_init():
+        pygame.mixer.init()
+    
+    # Load and play calculate score sound
+    calculate_score_sound = None
+    try:
+        calculate_score_path = os.path.join(os.path.dirname(__file__), "calculate_score.mp3")
+        calculate_score_sound = pygame.mixer.Sound(calculate_score_path)
+        calculate_score_sound.play()
+    except pygame.error as e:
+        print(f"Could not load calculate_score.mp3: {e}")
+    except FileNotFoundError:
+        print("calculate_score.mp3 not found in the current directory")
+    
     # Animation parameters
     animation_duration = 2.5  # 2.5 seconds
     start_time = time.time()
@@ -76,6 +92,10 @@ def animate_punch_score(screen, target_score, screen_width, screen_height, fonts
                 pygame.quit()
                 sys.exit()
     
+    # Stop the calculate score sound when animation main loop ends
+    if calculate_score_sound:
+        calculate_score_sound.stop()
+    
     # Final flash effect
     for flash in range(3):
         screen.fill(DARK_BG)
@@ -143,6 +163,7 @@ def create_responsive_layout(screen_width, screen_height):
 if __name__ == "__main__":
     # Test the animation
     pygame.init()
+    pygame.mixer.init()  # Initialize mixer for sound
     screen = pygame.display.set_mode((800, 600))
     pygame.display.set_caption("Punch Animation Test")
     
