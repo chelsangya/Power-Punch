@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import punch animation
-from punch_animation import animate_punch_score, create_responsive_layout
+from punch_animation2 import animate_punch_score, create_responsive_layout
 
 # Serial setup with error handling
 try:
@@ -106,29 +106,27 @@ screen_width, screen_height = info.current_w, info.current_h
 screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)
 pygame.display.set_caption('Power Punch Boxing Game')
 
-# Colors - Boxing-themed UI palette
+# Colors - Professional Boxing Arena Theme
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-# Boxing ring colors
-BOXING_RED = (180, 30, 30)        # Deep boxing glove red
+# Professional Boxing Colors - Blue and Red Theme
+BOXING_BLUE = (30, 50, 120)       # Professional boxing blue
+BOXING_RED = (180, 25, 25)        # Professional boxing red
+RING_BLUE = (40, 80, 150)         # Ring corner blue
+RING_RED = (200, 40, 40)          # Ring corner red
+# Championship and Medal Colors
 CHAMPION_GOLD = (255, 215, 0)     # Championship belt gold
 SILVER = (192, 192, 192)          # Silver medal
 BRONZE = (205, 127, 50)           # Bronze medal
-# Ring canvas and rope colors
-CANVAS_CREAM = (245, 240, 220)    # Boxing ring canvas
-ROPE_BLUE = (25, 70, 120)         # Traditional ring rope blue
-ROPE_RED = (160, 25, 25)          # Traditional ring rope red
-# Gym atmosphere colors
-GYM_STEEL = (70, 80, 90)          # Steel gym equipment
-LEATHER_BROWN = (101, 67, 33)     # Boxing glove leather
-SWEAT_GRAY = (85, 85, 85)         # Gym atmosphere
-MUSCLE_PURPLE = (150, 75, 175)    # Power/strength theme - brighter purple
-# Blood and bruise colors (for impact effects)
-BLOOD_RED = (139, 0, 0)           # Dark red for impact
-BRUISE_PURPLE = (72, 61, 139)     # Deep bruise color
-# Training colors
-TRAINING_ORANGE = (255, 140, 0)   # Training equipment orange
-SPEED_YELLOW = (255, 215, 50)     # Speed bag yellow
+# Arena Colors
+ARENA_BLUE = (20, 35, 80)         # Arena background blue
+ARENA_RED = (120, 20, 20)         # Arena background red
+CANVAS_WHITE = (250, 250, 250)    # Clean ring canvas
+# Professional Equipment Colors
+STEEL_GRAY = (100, 100, 100)      # Professional equipment
+LEATHER_BLACK = (40, 40, 40)      # Professional gloves
+PRO_ORANGE = (255, 140, 0)        # Professional accent
+TEXT_BLUE = (60, 100, 180)        # Professional text blue
 
 minimum_threshold = 305
 
@@ -268,11 +266,11 @@ def draw_button(surface, text, x, y, width, height, color, text_color, border_co
     
     return button_rect
 
-def draw_card(surface, x, y, width, height, color=WHITE, border_color=SWEAT_GRAY):
+def draw_card(surface, x, y, width, height, color=WHITE, border_color=STEEL_GRAY):
     """Draw a modern card with shadow effect"""
     # Draw shadow
     shadow_rect = pygame.Rect(x + 5, y + 5, width, height)
-    pygame.draw.rect(surface, GYM_STEEL, shadow_rect, border_radius=20)
+    pygame.draw.rect(surface, STEEL_GRAY, shadow_rect, border_radius=20)
     
     # Draw main card
     card_rect = pygame.Rect(x, y, width, height)
@@ -290,428 +288,413 @@ def draw_gradient_background(surface, color1, color2):
         b = int(color1[2] * (1 - ratio) + color2[2] * ratio)
         pygame.draw.line(surface, (r, g, b), (0, y), (screen_width, y))
 
-def draw_modern_button(surface, text, x, y, width, height, color, text_color, hover=False):
-    """Draw a modern button with enhanced styling and proper text fitting"""
+def draw_simple_button(surface, text, x, y, width, height, color, text_color, hover=False):
+    """Draw a simple professional button"""
     button_rect = pygame.Rect(x, y, width, height)
     
     # Hover effect
     if hover:
-        color = tuple(min(255, c + 40) for c in color)
-        # Add glow effect
-        glow_rect = pygame.Rect(x - 3, y - 3, width + 6, height + 6)
-        pygame.draw.rect(surface, (color[0]//3, color[1]//3, color[2]//3), glow_rect, border_radius=25)
+        color = tuple(min(255, c + 30) for c in color)
     
-    # Main button
-    pygame.draw.rect(surface, color, button_rect, border_radius=20)
+    # Simple button
+    pygame.draw.rect(surface, color, button_rect)
+    pygame.draw.rect(surface, text_color, button_rect, 3)
     
-    # Inner shadow/highlight
-    highlight_color = tuple(min(255, c + 60) for c in color)
-    pygame.draw.rect(surface, highlight_color, 
-                    pygame.Rect(x + 2, y + 2, width - 4, height // 2), border_radius=18)
-    
-    # Smart text sizing - choose font that fits
-    font_to_use = font_small  # Start with smaller font
-    text_surface = font_to_use.render(text, True, text_color)
-    
-    # If text is too wide, try even smaller font
-    if text_surface.get_width() > width - 20:
-        font_to_use = font_tiny
-        text_surface = font_to_use.render(text, True, text_color)
-    
-    # If still too wide, truncate text
-    if text_surface.get_width() > width - 20:
-        while len(text) > 1 and text_surface.get_width() > width - 20:
-            text = text[:-1]
-            text_surface = font_to_use.render(text + "...", True, text_color)
-    
-    # Text with shadow
-    shadow_surface = font_to_use.render(text, True, (30, 30, 30))
-    shadow_rect = shadow_surface.get_rect(center=(button_rect.centerx + 2, button_rect.centery + 2))
-    surface.blit(shadow_surface, shadow_rect)
-    
-    # Main text
+    # Text
+    text_surface = font_medium.render(text, True, text_color)
     text_rect = text_surface.get_rect(center=button_rect.center)
     surface.blit(text_surface, text_rect)
     
     return button_rect
 
 def draw_leaderboard_sidebar(sidebar_width):
-    """Draw spectacular professional leaderboard sidebar with modern UI"""
+    """Draw professional boxing leaderboard with blue and red theme"""
     # Calculate sidebar position (right side)
     sidebar_x = screen_width - sidebar_width
     
-    # Create sophisticated background with depth
-    # Main gradient background - boxing gym colors
+    # Professional blue gradient background
     for x in range(sidebar_width):
         ratio = x / sidebar_width
-        # Boxing gym gradient with leather/steel tones
-        r = int(20 * (1 - ratio) + 35 * ratio)
-        g = int(15 * (1 - ratio) + 25 * ratio)
-        b = int(10 * (1 - ratio) + 15 * ratio)
+        r = int(ARENA_BLUE[0] * (1 - ratio) + BOXING_BLUE[0] * ratio)
+        g = int(ARENA_BLUE[1] * (1 - ratio) + BOXING_BLUE[1] * ratio)
+        b = int(ARENA_BLUE[2] * (1 - ratio) + BOXING_BLUE[2] * ratio)
         pygame.draw.line(screen, (r, g, b), (sidebar_x + x, 0), (sidebar_x + x, screen_height))
     
-    # Enhanced left border with animated glow
-    import time
-    glow_intensity = abs(int(time.time() * 2) % 100 - 50) / 50.0
-    base_glow = 150 + int(glow_intensity * 105)
+    # Clean border - no effects
+    pygame.draw.line(screen, BOXING_RED, (sidebar_x, 0), (sidebar_x, screen_height), 4)
     
-    # Multi-layer border glow - championship gold
-    for i in range(8):
-        alpha_factor = max(0, 1 - i / 5.0)
-        border_brightness = int(base_glow * alpha_factor)
-        border_color = (border_brightness, int(border_brightness * 0.84), 0)
-        pygame.draw.line(screen, border_color, (sidebar_x + i, 0), (sidebar_x + i, screen_height), 1)
-    
-    # Elegant header section with gradient
-    header_height = 100
+    # Header section
+    header_height = 80
     header_rect = pygame.Rect(sidebar_x, 0, sidebar_width, header_height)
+    pygame.draw.rect(screen, BOXING_RED, header_rect)
     
-    # Header gradient
-    for y in range(header_height):
-        ratio = y / header_height
-        r = int(30 * (1 - ratio) + 15 * ratio)
-        g = int(45 * (1 - ratio) + 25 * ratio)  
-        b = int(70 * (1 - ratio) + 40 * ratio)
-        pygame.draw.line(screen, (r, g, b), (sidebar_x, y), (sidebar_x + sidebar_width, y))
-    
-    # Header border
-    pygame.draw.rect(screen, CHAMPION_GOLD, header_rect, 3)
-
-    
-    # Title with layered shadow effect
-    for offset in [(3, 3), (2, 2), (1, 1)]:
-        shadow_color = (5, 5, 5) if offset == (3, 3) else (10, 10, 10) if offset == (2, 2) else (15, 15, 15)
-        title_shadow = font_large.render("LEADERBOARD", True, shadow_color)
-        shadow_rect = title_shadow.get_rect(center=(sidebar_x + sidebar_width // 2 + offset[0], 55 + offset[1]))
-        screen.blit(title_shadow, shadow_rect)
-    
-    # Main title
-    title_text = font_large.render("HALL OF FAME", True, CHAMPION_GOLD)
-    title_rect = title_text.get_rect(center=(sidebar_x + sidebar_width // 2, 55))
+    # Simple title
+    title_text = font_large.render("LEADERBOARD", True, WHITE)
+    title_rect = title_text.get_rect(center=(sidebar_x + sidebar_width // 2, 40))
     screen.blit(title_text, title_rect)
- 
     
     # Get leaderboard data
     leaderboard = get_leaderboard()
     
     if leaderboard:
-        # Elegant header section for rankings
-        header_y = 110
-        header_bg = pygame.Rect(sidebar_x + 8, header_y, sidebar_width - 16, 40)
+        # Table header
+        header_y = 90
+        header_bg = pygame.Rect(sidebar_x + 10, header_y, sidebar_width - 20, 35)
+        pygame.draw.rect(screen, CANVAS_WHITE, header_bg)
+        pygame.draw.rect(screen, BLACK, header_bg, 2)
         
-        # Header gradient
-        for i in range(40):
-            ratio = i / 40
-            r = int(25 * (1 - ratio) + 35 * ratio)
-            g = int(35 * (1 - ratio) + 50 * ratio)
-            b = int(55 * (1 - ratio) + 75 * ratio)
-            pygame.draw.line(screen, (r, g, b), 
-                           (sidebar_x + 8, header_y + i), 
-                           (sidebar_x + sidebar_width - 8, header_y + i))
+        # Header text
+        rank_text = font_small.render("RANK", True, BLACK)
+        name_text = font_small.render("NAME", True, BLACK)
+        score_text = font_small.render("SCORE", True, BLACK)
         
-        pygame.draw.rect(screen, (100, 85, 20), header_bg, 2, border_radius=12)
-        
-        # Header text with better positioning and proper alignment
-        rank_text = font_small.render("RANK", True, CHAMPION_GOLD)
-        name_text = font_small.render("CHAMPION", True, CHAMPION_GOLD)
-        score_text = font_small.render("POWER", True, CHAMPION_GOLD)
-        
-        screen.blit(rank_text, (sidebar_x + 20, header_y + 12))
-        screen.blit(name_text, (sidebar_x + 85, header_y + 12))
-        screen.blit(score_text, (sidebar_x + sidebar_width - 100, header_y + 12))
+        screen.blit(rank_text, (sidebar_x + 20, header_y + 10))
+        screen.blit(name_text, (sidebar_x + 80, header_y + 10))
+        screen.blit(score_text, (sidebar_x + sidebar_width - 80, header_y + 10))
 
-        entry_y = header_y + 55
-        entry_height = 38  
-        entry_spacing = 10
+        entry_y = header_y + 40
+        entry_height = 30
         
-        for i, entry in enumerate(leaderboard[:10]):  # Show top 10
+        for i, entry in enumerate(leaderboard[:10]):
             rank = i + 1
             username = entry["username"]
             score = entry["score"]
             
-            # Dynamic background colors with special effects
+            # Simple alternating backgrounds
             if rank == 1:
-                # Gold champion special effects
-                bg_base = (45, 40, 10)
-                border_color = CHAMPION_GOLD
-                text_glow = True
-                bg_intensity = 0.7 + 0.3 * glow_intensity
+                bg_color = CHAMPION_GOLD
+                text_color = BLACK
             elif rank == 2:
-                # Silver runner-up
-                bg_base = (40, 40, 40)
-                border_color = SILVER
-                text_glow = True
-                bg_intensity = 0.6 + 0.2 * glow_intensity
+                bg_color = SILVER
+                text_color = BLACK
             elif rank == 3:
-                # Bronze third place
-                bg_base = (45, 30, 15)
-                border_color = BRONZE
-                text_glow = True
-                bg_intensity = 0.5 + 0.2 * glow_intensity
+                bg_color = BRONZE
+                text_color = BLACK
             else:
-                # Regular entries with alternating colors
-                if i % 2 == 0:
-                    bg_base = (25, 35, 50)
-                    border_color = (60, 80, 110)
-                else:
-                    bg_base = (20, 30, 45)
-                    border_color = (50, 70, 100)
-                text_glow = False
-                bg_intensity = 1.0
+                bg_color = CANVAS_WHITE if i % 2 == 0 else (240, 240, 240)
+                text_color = BLACK
             
-            # Apply intensity to background
-            bg_color = tuple(int(c * bg_intensity) for c in bg_base)
+            entry_rect = pygame.Rect(sidebar_x + 10, entry_y, sidebar_width - 20, entry_height)
+            pygame.draw.rect(screen, bg_color, entry_rect)
+            pygame.draw.rect(screen, BLACK, entry_rect, 1)
             
-            entry_rect = pygame.Rect(sidebar_x + 8, entry_y, sidebar_width - 16, entry_height)
-            
-            # Enhanced glow for top 3
-            if rank <= 3:
-                for glow_layer in range(3):  # Reduced glow layers for cleaner look
-                    glow_rect = pygame.Rect(sidebar_x + 8 - glow_layer, entry_y - glow_layer, 
-                                          sidebar_width - 16 + 2*glow_layer, entry_height + 2*glow_layer)
-                    glow_alpha = max(0, 30 - glow_layer * 10)
-                    if rank == 1:
-                        glow_tint = (min(255, 80 + glow_alpha), min(255, 70 + glow_alpha), 0)
-                    elif rank == 2:
-                        glow_tint = (min(255, 50 + glow_alpha), min(255, 50 + glow_alpha), min(255, 50 + glow_alpha))
-                    else:
-                        glow_tint = (min(255, 60 + glow_alpha), min(255, 40 + glow_alpha), 0)
-                    
-                    # Simulate glow with multiple rectangles
-                    pygame.draw.rect(screen, glow_tint, glow_rect, 1, border_radius=12)
-            
-            # Main entry background
-            pygame.draw.rect(screen, bg_color, entry_rect, border_radius=10)
-            pygame.draw.rect(screen, border_color, entry_rect, 2, border_radius=10)
-            
-            # Rank display with icons and styling
-            if rank == 1:
-                rank_display = "#1"
-                rank_color = CHAMPION_GOLD
-            elif rank == 2:
-                rank_display = "#2"
-                rank_color = SILVER
-            elif rank == 3:
-                rank_display = "#3"
-                rank_color = BRONZE
-            else:
-                rank_display = f"#{rank}"
-                rank_color = (180, 190, 200)
-            
-            # Text with enhanced shadow for readability - proper alignment
-            text_y_offset = (entry_height - font_small.get_height()) // 2  # Center vertically
-            
-            for shadow_offset in [(1, 1)]:  # Single shadow for cleaner look
-                shadow_intensity = 0.4
-                shadow_color = tuple(int(c * shadow_intensity) for c in (0, 0, 0))
-                
-                rank_shadow = font_small.render(rank_display, True, shadow_color)
-                name_shadow = font_small.render(username[:8], True, shadow_color)
-                score_shadow = font_small.render(str(score), True, shadow_color)
-                
-                screen.blit(rank_shadow, (sidebar_x + 15 + shadow_offset[0], entry_y + text_y_offset + shadow_offset[1]))
-                screen.blit(name_shadow, (sidebar_x + 85 + shadow_offset[0], entry_y + text_y_offset + shadow_offset[1]))
-                screen.blit(score_shadow, (sidebar_x + sidebar_width - 80 + shadow_offset[0], entry_y + text_y_offset + shadow_offset[1]))
-            
-            # Main text with enhanced colors and proper alignment
-            text_color = WHITE if rank > 3 else (255, 255, 220)
-            
-            rank_surface = font_small.render(rank_display, True, rank_color)
+            # Simple text positioning
+            rank_surface = font_small.render(f"{rank}", True, text_color)
             name_surface = font_small.render(username[:8], True, text_color)
-            score_surface = font_small.render(str(score), True, rank_color)
+            score_surface = font_small.render(str(score), True, text_color)
             
-            # Properly aligned text positioning
-            screen.blit(rank_surface, (sidebar_x + 15, entry_y + text_y_offset))
-            screen.blit(name_surface, (sidebar_x + 85, entry_y + text_y_offset))
-            screen.blit(score_surface, (sidebar_x + sidebar_width - 80, entry_y + text_y_offset))
+            screen.blit(rank_surface, (sidebar_x + 25, entry_y + 8))
+            screen.blit(name_surface, (sidebar_x + 80, entry_y + 8))
+            screen.blit(score_surface, (sidebar_x + sidebar_width - 75, entry_y + 8))
             
-            entry_y += entry_height + entry_spacing
+            entry_y += entry_height + 2
     
     else:
-        # No leaderboard data
-        no_data_y = 200  # Fixed Y position for no data message
-        no_data_text = font_large.render("NO CHAMPIONS YET", True, CHAMPION_GOLD)
-        no_data_rect = no_data_text.get_rect(center=(sidebar_x + sidebar_width // 2, no_data_y))
+        no_data_text = font_medium.render("NO SCORES YET", True, WHITE)
+        no_data_rect = no_data_text.get_rect(center=(sidebar_x + sidebar_width // 2, 200))
         screen.blit(no_data_text, no_data_rect)
 
 
 def display_username_input():
-    """Display username input with permanent leaderboard sidebar on right"""
+    """Display username input with top leaderboard and bottom input section"""
     global current_username, input_active, button_rects
     
-    # Only start wait music if not already playing to avoid restarts during typing
+    # Play background music
     if not pygame.mixer.music.get_busy():
         try:
             pygame.mixer.music.load("wait_at_0.mp3")
-            pygame.mixer.music.play(-1)  # Loop indefinitely
+            pygame.mixer.music.play(-1)
             print("Playing wait_at_0.mp3 in loop")
         except pygame.error as e:
             print(f"Could not load wait_at_0.mp3: {e}")
         except FileNotFoundError:
             print("wait_at_0.mp3 not found")
     
-    # Clear button rects
     button_rects.clear()
     
-    # Draw boxing gym atmosphere background
-    screen.fill((25, 20, 15))
+    # Professional boxing arena background - Red and Blue split
+    # Top half - Blue arena
+    top_rect = pygame.Rect(0, 0, screen_width, screen_height // 2)
+    pygame.draw.rect(screen, ARENA_BLUE, top_rect)
     
-    # Calculate layout dimensions (leaderboard on right)
-    sidebar_width = int(screen_width * 0.35)
-    main_width = screen_width - sidebar_width
+    # Bottom half - Red arena  
+    bottom_rect = pygame.Rect(0, screen_height // 2, screen_width, screen_height // 2)
+    pygame.draw.rect(screen, ARENA_RED, bottom_rect)
     
-    # Draw permanent leaderboard sidebar on right
-    draw_leaderboard_sidebar(sidebar_width)
+    # Center dividing line
+    pygame.draw.line(screen, WHITE, (0, screen_height // 2), (screen_width, screen_height // 2), 6)
     
-    # Main content area (left side)
-    main_x = 0
+    # TOP SECTION - Title and Leaderboard
+    title_y = 40
+    subtitle_text = font_large.render("Current Champions", True, CHAMPION_GOLD)
     
-    # Title section with better spacing
-    title_y = 60
-    title_text = font_title.render("POWER PUNCH", True, CHAMPION_GOLD)
-    subtitle_text = font_large.render("Boxing Championship", True, WHITE)
+    subtitle_rect = subtitle_text.get_rect(center=(screen_width // 2, title_y + 50))
     
-    title_rect = title_text.get_rect(center=(main_width // 2, title_y))
-    subtitle_rect = subtitle_text.get_rect(center=(main_width // 2, title_y + 60))
+
+    # Horizontal leaderboard in top section
+    leaderboard_y = 120
+    leaderboard = get_leaderboard()
     
-    screen.blit(title_text, title_rect)
-    screen.blit(subtitle_text, subtitle_rect)
+    if leaderboard:
+        # Header
+        screen.blit(subtitle_text, subtitle_rect)
+        
+        # Show top 5 horizontally with improved design
+        top_5 = leaderboard[:5]
+        card_width = min(200, (screen_width - 120) // 5)
+        card_height = 120
+        spacing = 25
+        total_width = len(top_5) * card_width + (len(top_5) - 1) * spacing
+        start_x = (screen_width - total_width) // 2
+        card_y = leaderboard_y + 40
+        
+        for i, entry in enumerate(top_5):
+            card_x = start_x + i * (card_width + spacing)
+            
+            # Enhanced card design with modern styling
+            card_rect = pygame.Rect(card_x, card_y, card_width, card_height)
+            
+            # Enhanced shadow for depth
+            shadow_rect = pygame.Rect(card_x + 4, card_y + 4, card_width, card_height)
+            pygame.draw.rect(screen, (30, 30, 30), shadow_rect, border_radius=15)
+            
+            # Gradient-like effect with lighter border
+            card_color = CANVAS_WHITE
+            border_color = STEEL_GRAY
+            text_color = BLACK
+            rank_number = f"#{i+1}"
+                
+            pygame.draw.rect(screen, card_color, card_rect, border_radius=15)
+            pygame.draw.rect(screen, border_color, card_rect, 2, border_radius=15)
+            
+            # Top section - Rank with background circle
+            rank_circle_center = (card_x + card_width // 2, card_y + 30)
+            rank_circle_radius = 18
+            # pygame.draw.circle(screen, BOXING_BLUE, rank_circle_center, rank_circle_radius)
+            # pygame.draw.circle(screen, WHITE, rank_circle_center, rank_circle_radius - 2)
+            
+            # Rank number in circle
+            rank_text = font_small.render(rank_number, True, BOXING_BLUE)
+            rank_rect = rank_text.get_rect(center=rank_circle_center)
+            # screen.blit(rank_text, rank_rect)
+            
+            # Middle section - Fighter name with better spacing
+            name_y = card_y + 40
+            name_text = font_medium.render(entry["username"][:10], True, text_color)
+            name_rect = name_text.get_rect(center=(card_x + card_width // 2, name_y))
+            screen.blit(name_text, name_rect)
+            
+            # Bottom section - Score with background
+            score_bg_rect = pygame.Rect(card_x + 10, card_y + 75, card_width - 20, 35)
+            pygame.draw.rect(screen, BOXING_BLUE, score_bg_rect, border_radius=8)
+            
+            # Score text in white on blue background
+            score_text = font_medium.render(str(entry["score"]), True, WHITE)
+            score_rect = score_text.get_rect(center=score_bg_rect.center)
+            screen.blit(score_text, score_rect)
     
-    # Username input section
-    input_y = 200
+    # BOTTOM SECTION - Username Input
+    input_section_y = screen_height // 2 + 100
     
-    # Username input box
-    input_box_width = min(350, main_width - 80)
+    # Input prompt
+    prompt_text = font_large.render("ENTER FIGHTER NAME", True, WHITE)
+    prompt_rect = prompt_text.get_rect(center=(screen_width // 2, input_section_y))
+    screen.blit(prompt_text, prompt_rect)
+    
+    # Username input box - centered
+    input_box_width = 400
     input_box_height = 60
-    input_box_x = (main_width - input_box_width) // 2
-    input_box_y = input_y + 40
+    input_box_x = (screen_width - input_box_width) // 2
+    input_box_y = input_section_y + 60
     
     input_box_rect = pygame.Rect(input_box_x, input_box_y, input_box_width, input_box_height)
     
-    # Modern input box styling
-    box_color = (40, 50, 60) if input_active else (30, 40, 50)
-    border_color = CHAMPION_GOLD if input_active else (70, 80, 90)
-    pygame.draw.rect(screen, box_color, input_box_rect, border_radius=15)
-    pygame.draw.rect(screen, border_color, input_box_rect, 4, border_radius=15)
+    # Clean input box styling
+    box_color = CANVAS_WHITE if input_active else (220, 220, 220)
+    pygame.draw.rect(screen, box_color, input_box_rect)
+    pygame.draw.rect(screen, BLACK, input_box_rect, 3)
     
-    # Username text with proper sizing
-    username_text = font_small.render(current_username, True, WHITE)
+    # Username text
+    username_text = font_medium.render(current_username, True, BLACK)
     text_x = input_box_rect.x + 15
     text_y = input_box_rect.y + (input_box_rect.height - username_text.get_height()) // 2
     screen.blit(username_text, (text_x, text_y))
     
-    # Animated cursor
+    # Simple cursor
     if input_active and int(time.time() * 2) % 2:
         cursor_x = text_x + username_text.get_width() + 5
         cursor_y = input_box_rect.y + 15
-        pygame.draw.line(screen, CHAMPION_GOLD, (cursor_x, cursor_y), (cursor_x, cursor_y + 30), 2)
-    
-    # Start button (only if username is entered)
-    if current_username.strip():
-        button_width = 200
-        button_height = 50
-        start_button_x = (main_width - button_width) // 2
-        start_button_y = input_y + 120
-        
-        hover = 'start' in button_rects and button_rects['start'].collidepoint(mouse_pos) if button_rects else False
-        button_rects['start'] = draw_modern_button(screen, "START GAME", start_button_x, start_button_y, 
-                                                 button_width, button_height, ROPE_BLUE, WHITE, hover)
+        pygame.draw.line(screen, BLACK, (cursor_x, cursor_y), (cursor_x, cursor_y + 30), 2)
     
     pygame.display.flip()
 
 def display_initial_screen():
-    """Display main game screen with permanent leaderboard sidebar"""
+    """Display main game screen with horizontal split layout"""
     global current_state, update_screen_timer, button_rects
     
-    # Continue playing wait_at_0.mp3 if not already playing
+    # Continue playing wait music
     if not pygame.mixer.music.get_busy():
         try:
             pygame.mixer.music.load("wait_at_0.mp3")
-            pygame.mixer.music.play(-1)  # Loop indefinitely
+            pygame.mixer.music.play(-1)
             print("Playing wait_at_0.mp3 in loop")
         except pygame.error as e:
             print(f"Could not load wait_at_0.mp3: {e}")
         except FileNotFoundError:
             print("wait_at_0.mp3 not found")
     
-    # Clear button rects
     button_rects.clear()
     
-    # Draw boxing gym atmosphere background
-    screen.fill((25, 20, 15))
+    # Split screen horizontally - Left Blue, Right Red
+    left_width = screen_width // 2
     
-    # Calculate layout dimensions
-    sidebar_width = int(screen_width * 0.35)
-    main_width = screen_width - sidebar_width
+    # Left side - Blue scoring area
+    left_rect = pygame.Rect(0, 0, left_width, screen_height)
+    pygame.draw.rect(screen, ARENA_BLUE, left_rect)
     
-    # Draw permanent leaderboard sidebar
-    draw_leaderboard_sidebar(sidebar_width)
+    # Right side - Red leaderboard area
+    right_rect = pygame.Rect(left_width, 0, screen_width - left_width, screen_height)
+    pygame.draw.rect(screen, ARENA_RED, right_rect)
     
-    # Main content area (left side, avoiding leaderboard)
-    main_x = 0
+    # Center dividing line
+    pygame.draw.line(screen, WHITE, (left_width, 0), (left_width, screen_height), 6)
     
-    # Show enhanced circular score display for user
+    # LEFT SIDE - Score Display
     if current_username:
-        # Draw large enhanced circular score display
-        circle_center_x = main_x + main_width // 2
+        # Title
+        score_title = font_large.render("PUNCH POWER", True, WHITE)
+        title_rect = score_title.get_rect(center=(left_width // 2, 80))
+        screen.blit(score_title, title_rect)
+        
+        # Large score circle - clean and simple
+        circle_center_x = left_width // 2
         circle_center_y = screen_height // 2
-        circle_radius = 140
+        circle_radius = 120
         
-        # Outer circle (thick championship gold border)
-        pygame.draw.circle(screen, CHAMPION_GOLD, (circle_center_x, circle_center_y), circle_radius, 8)
+        # Outer circle
+        pygame.draw.circle(screen, WHITE, (circle_center_x, circle_center_y), circle_radius, 6)
         
-        # Inner circle (dark boxing bag background)
-        inner_radius = circle_radius - 8
-        pygame.draw.circle(screen, (30, 25, 20), (circle_center_x, circle_center_y), inner_radius)
+        # Inner circle
+        inner_radius = circle_radius - 10
+        pygame.draw.circle(screen, BOXING_BLUE, (circle_center_x, circle_center_y), inner_radius)
         
-        # Very large "0" in the center with shadow
-        big_score_font = pygame.font.Font(None, 180)
-        
-        # Score shadow
-        shadow_text = big_score_font.render("0", True, (10, 15, 20))
-        shadow_rect = shadow_text.get_rect(center=(circle_center_x + 4, circle_center_y + 4))
-        screen.blit(shadow_text, shadow_rect)
-        
-        # Main score text
+        # Score text
+        big_score_font = pygame.font.Font(None, 150)
         score_text = big_score_font.render("0", True, WHITE)
         score_rect = score_text.get_rect(center=(circle_center_x, circle_center_y))
         screen.blit(score_text, score_rect)
         
-        # Enhanced label above the circle
-        score_label = font_medium.render("YOUR SCORE", True, CHAMPION_GOLD)
-        label_rect = score_label.get_rect(center=(circle_center_x, circle_center_y - circle_radius - 50))
-        screen.blit(score_label, label_rect)
-        
-        # Add decorative elements around the circle
-        for angle in range(0, 360, 45):
-            dot_x = circle_center_x + int((circle_radius + 25) * math.cos(math.radians(angle)))
-            dot_y = circle_center_y + int((circle_radius + 25) * math.sin(math.radians(angle)))
-            pygame.draw.circle(screen, CHAMPION_GOLD, (dot_x, dot_y), 4)
+        # Your score label
+        label_text = font_medium.render("YOUR SCORE", True, WHITE)
+        label_rect = label_text.get_rect(center=(circle_center_x, circle_center_y - circle_radius - 40))
+        screen.blit(label_text, label_rect)
     
-    # Target zone with enhanced styling
-    target_y = screen_height - 200
-    target_text = font_medium.render("Target: 650+ for Good, 865+ for Great!", True, MUSCLE_PURPLE)
-    target_rect = target_text.get_rect(center=(main_x + main_width // 2, target_y))
+    # Target information at bottom left
+    target_y = screen_height - 120
+    target_info = [
+        "TARGET ZONES:",
+        "650+ = Good Hit",
+        "865+ = Great Hit",
+        "1000+ = Champion!"
+    ]
     
-    # Add background for target text with brighter contrast
-    target_bg_rect = pygame.Rect(target_rect.x - 20, target_rect.y - 10, target_rect.width + 40, target_rect.height + 20)
-    pygame.draw.rect(screen, (35, 25, 45), target_bg_rect, border_radius=15)  # Darker background for better contrast
-    pygame.draw.rect(screen, MUSCLE_PURPLE, target_bg_rect, 3, border_radius=15)  # Thicker border
+    # for i, line in enumerate(target_info):
+    #     color = CHAMPION_GOLD if i == 0 else WHITE
+    #     font = font_medium if i == 0 else font_small
+    #     text = font.render(line, True, color)
+    #     text_rect = text.get_rect(center=(left_width // 2, target_y + i * 25))
+    #     screen.blit(text, text_rect)
     
-    screen.blit(target_text, target_rect)
-    
-    # Demo mode instructions (if Arduino not connected)
+    # Demo mode instructions
     if not SERIAL_CONNECTED:
-        demo_y = target_y + 60
-        demo_text = font_small.render("DEMO MODE: Press SPACE for random punch, or 1/2/3 for specific scores", True, TRAINING_ORANGE)
-        demo_rect = demo_text.get_rect(center=(main_x + main_width // 2, demo_y))
-        
-        # Demo mode background
-        demo_bg_rect = pygame.Rect(demo_rect.x - 15, demo_rect.y - 8, demo_rect.width + 30, demo_rect.height + 16)
-        pygame.draw.rect(screen, (45, 35, 20), demo_bg_rect, border_radius=10)
-        pygame.draw.rect(screen, TRAINING_ORANGE, demo_bg_rect, 2, border_radius=10)
-        
+        demo_y = target_y + 120
+        demo_text = font_tiny.render("DEMO: Press SPACE or 1/2/3 for test punches", True, PRO_ORANGE)
+        demo_rect = demo_text.get_rect(center=(left_width // 2, demo_y))
         screen.blit(demo_text, demo_rect)
+    
+    # RIGHT SIDE - Leaderboard
+    right_center = left_width + (screen_width - left_width) // 2
+    
+    # Leaderboard title
+    leaderboard_title = font_large.render("HALL OF FAME", True, WHITE)
+    title_rect = leaderboard_title.get_rect(center=(right_center, 60))
+    screen.blit(leaderboard_title, title_rect)
+    
+    # Leaderboard content
+    leaderboard = get_leaderboard()
+    if leaderboard:
+        start_y = 120
+        
+        # Table headers
+        headers_y = start_y
+        rank_x = left_width + 30
+        name_x = left_width + 100
+        score_x = left_width + 250
+        
+        # Header background
+        header_rect = pygame.Rect(left_width + 20, headers_y, screen_width - left_width - 40, 40)
+        pygame.draw.rect(screen, CANVAS_WHITE, header_rect)
+        pygame.draw.rect(screen, BLACK, header_rect, 2)
+        
+        rank_header = font_small.render("RANK", True, BLACK)
+        name_header = font_small.render("FIGHTER", True, BLACK)
+        score_header = font_small.render("POWER", True, BLACK)
+        
+        screen.blit(rank_header, (rank_x, headers_y + 12))
+        screen.blit(name_header, (name_x, headers_y + 12))
+        screen.blit(score_header, (score_x, headers_y + 12))
+        
+        # Leaderboard entries - Show only top 5
+        entry_y = headers_y + 50
+        for i, entry in enumerate(leaderboard[:5]):
+            rank = i + 1
+            username = entry["username"]
+            score = entry["score"]
+            
+            # Enhanced row background with better height
+            row_height = 45
+            row_rect = pygame.Rect(left_width + 20, entry_y, screen_width - left_width - 40, row_height)
+            
+            # Uniform color scheme for all ranks
+            if rank == 1:
+                row_color = CHAMPION_GOLD
+                text_color = BLACK
+                rank_display = "1st"
+            elif rank == 2:
+                row_color = SILVER
+                text_color = BLACK
+                rank_display = "2nd"
+            elif rank == 3:
+                row_color = BRONZE
+                text_color = BLACK
+                rank_display = "3rd"
+            elif rank == 4:
+                row_color = CANVAS_WHITE
+                text_color = BLACK
+                rank_display = "4th"
+            else:
+                row_color = CANVAS_WHITE
+                text_color = BLACK
+                rank_display = "5th"
+            
+            pygame.draw.rect(screen, row_color, row_rect, border_radius=8)
+            pygame.draw.rect(screen, BLACK, row_rect, 2, border_radius=8)
+            
+            # Enhanced text with better formatting
+            rank_text = font_small.render(rank_display, True, text_color)
+            name_text = font_small.render(username[:15], True, text_color)
+            score_text = font_medium.render(str(score), True, text_color)
+            
+            # Better text positioning
+            screen.blit(rank_text, (rank_x, entry_y + 12))
+            screen.blit(name_text, (name_x, entry_y + 12))
+            screen.blit(score_text, (score_x, entry_y + 10))
+            
+            entry_y += row_height + 8  # Increased spacing between rows
+    else:
+        no_data_text = font_medium.render("NO CHAMPIONS YET", True, WHITE)
+        no_data_rect = no_data_text.get_rect(center=(right_center, 200))
+        screen.blit(no_data_text, no_data_rect)
     
     pygame.display.flip()
     current_state = "initial"
@@ -767,135 +750,223 @@ def show_punch_result_screen(average_force):
     update_screen_timer = time.time()
 
 def draw_fullscreen_leaderboard(username, force):
-    """Draw full-screen leaderboard with current user's score and clean table"""
-    # Boxing gym background
-    screen.fill((25, 20, 15))
+    """Draw professional full-screen leaderboard with enhanced UI design"""
+    # Create gradient background
+    for y in range(screen_height):
+        color_value = max(15, min(45, 15 + (y * 30) // screen_height))
+        pygame.draw.line(screen, (color_value, color_value * 0.8, color_value * 0.6), (0, y), (screen_width, y))
     
-    # Title section - centered and prominent
-    title_y = 60
-    title_text = font_title.render("FINAL SCORE", True, CHAMPION_GOLD)
-    title_rect = title_text.get_rect(center=(screen_width // 2, title_y))
+    # Enhanced title section with shadow and glow effect
+    title_bg_rect = pygame.Rect(0, 0, screen_width, 120)
+    pygame.draw.rect(screen, (20, 15, 15), title_bg_rect)
+    pygame.draw.rect(screen, BOXING_RED, (0, 0, screen_width, 8))
+    pygame.draw.rect(screen, CHAMPION_GOLD, (0, 112, screen_width, 8))
+    
+    # Title with shadow effect
+    title_shadow = font_title.render("FIGHT RESULTS", True, BLACK)
+    title_text = font_title.render("FIGHT RESULTS", True, WHITE)
+    title_rect = title_text.get_rect(center=(screen_width // 2, 60))
+    screen.blit(title_shadow, (title_rect.x + 3, title_rect.y + 3))
     screen.blit(title_text, title_rect)
     
-    # User's score card - compact version at top
+    # User's enhanced score section
     if username and force > 0:
-        card_y = 120
-        card_width = 300
-        card_height = 80
+        score_y = 150
+        
+        # Main score card with gradient and shadow
+        card_width = 700
+        card_height = 120
         card_x = (screen_width - card_width) // 2
         
-        # Draw card with boxing theme
-        card_rect = pygame.Rect(card_x, card_y, card_width, card_height)
-        
         # Card shadow
-        shadow_rect = pygame.Rect(card_x + 5, card_y + 5, card_width, card_height)
-        pygame.draw.rect(screen, (15, 10, 5), shadow_rect, border_radius=15)
+        shadow_rect = pygame.Rect(card_x + 6, score_y + 6, card_width, card_height)
+        pygame.draw.rect(screen, (0, 0, 0, 100), shadow_rect, border_radius=15)
         
         # Main card background
-        pygame.draw.rect(screen, LEATHER_BROWN, card_rect, border_radius=15)
-        pygame.draw.rect(screen, CHAMPION_GOLD, card_rect, 4, border_radius=15)
+        card_rect = pygame.Rect(card_x, score_y, card_width, card_height)
         
-        # Score label and value on same line
-        label_text = font_small.render("YOUR SCORE:", True, CHAMPION_GOLD)
-        score_text = font_large.render(f"{int(force)}", True, WHITE)
+        # Determine performance colors and text
+        if force >= 1000:
+            card_color = CHAMPION_GOLD
+            accent_color = (255, 215, 0)
+            perf_text = "CHAMPION LEVEL!"
+            perf_icon = "👑"
+        elif force >= 865:
+            card_color = SILVER
+            accent_color = (192, 192, 192)
+            perf_text = "EXCELLENT HIT!"
+            perf_icon = "⭐"
+        elif force >= 650:
+            card_color = BRONZE
+            accent_color = (205, 127, 50)
+            perf_text = "GOOD HIT!"
+            perf_icon = "💪"
+        else:
+            card_color = CANVAS_WHITE
+            accent_color = (150, 150, 150)
+            perf_text = "KEEP TRAINING!"
+            perf_icon = "🥊"
         
-        # Center both texts together
-        total_width = label_text.get_width() + 20 + score_text.get_width()
-        start_x = card_x + (card_width - total_width) // 2
+        pygame.draw.rect(screen, card_color, card_rect, border_radius=15)
+        pygame.draw.rect(screen, BLACK, card_rect, 4, border_radius=15)
         
-        screen.blit(label_text, (start_x, card_y + 30))
-        screen.blit(score_text, (start_x + label_text.get_width() + 20, card_y + 25))
+        # Accent border inside
+        inner_rect = pygame.Rect(card_x + 8, score_y + 8, card_width - 16, card_height - 16)
+        pygame.draw.rect(screen, accent_color, inner_rect, 2, border_radius=10)
+        
+        # Player name section
+        name_label = font_small.render("FIGHTER:", True, BLACK)
+        name_text = font_large.render(f"{username}", True, BLACK)
+        screen.blit(name_label, (card_x + 30, score_y + 20))
+        screen.blit(name_text, (card_x + 30, score_y + 45))
+        
+        # Score section with larger font
+        score_label = font_small.render("POWER SCORE:", True, BLACK)
+        score_text = font_title.render(f"{int(force)}", True, BLACK)
+        score_x = card_x + card_width - 200
+        screen.blit(score_label, (score_x, score_y + 20))
+        screen.blit(score_text, (score_x, score_y + 45))
+        
+        # Performance banner below card
+        banner_y = score_y + card_height + 20
+        banner_width = 500
+        banner_height = 50
+        banner_x = (screen_width - banner_width) // 2
+        
+        banner_rect = pygame.Rect(banner_x, banner_y, banner_width, banner_height)
+        pygame.draw.rect(screen, accent_color, banner_rect, border_radius=25)
+        pygame.draw.rect(screen, BLACK, banner_rect, 3, border_radius=25)
+        
+        perf_final_text = font_medium.render(perf_text, True, BLACK)
+        perf_rect = perf_final_text.get_rect(center=(screen_width // 2, banner_y + 25))
+        screen.blit(perf_final_text, perf_rect)
     
-    # BIG LEADERBOARD TABLE - much larger and more prominent
-    table_start_y = 220
+    # Enhanced leaderboard table
+    table_y = 300
     leaderboard = get_leaderboard()
     
     if leaderboard:
-        # BIG TABLE HEADER - much larger and more prominent
-        header_y = table_start_y
-        header_width = min(1200, screen_width - 100)  # Much wider table
-        header_height = 80  # Taller header
-        header_x = (screen_width - header_width) // 2
+        # Leaderboard title with decorative elements
+        leaderboard_title = font_large.render("TOP CHAMPIONS", True, WHITE)
+        title_bg_width = leaderboard_title.get_width() + 60
+        title_bg_rect = pygame.Rect((screen_width - title_bg_width) // 2, table_y - 10, title_bg_width, 50)
+        # pygame.draw.rect(screen, (40, 30, 25), title_bg_rect, border_radius=25)
+        # pygame.draw.rect(screen, CHAMPION_GOLD, title_bg_rect, 3, border_radius=25)
         
-        # Column headers - bigger spacing
-        col_header_y = header_y + 20
-        rank_col_x = header_x + 100
-        name_col_x = header_x + 350
-        score_col_x = header_x + 800
+        title_rect = leaderboard_title.get_rect(center=(screen_width // 2, table_y + 15))
+        # screen.blit(leaderboard_title, title_rect)
         
-        # Column header background - bigger
-        col_header_rect = pygame.Rect(header_x, col_header_y, header_width, 60)
-        pygame.draw.rect(screen, (40, 35, 30), col_header_rect, border_radius=15)
-        pygame.draw.rect(screen, ROPE_BLUE, col_header_rect, 4, border_radius=15)
+        # Enhanced table setup
+        table_start_y = table_y + 70
+        table_width = min(850, screen_width - 80)
+        table_x = (screen_width - table_width) // 2
         
-        # Column headers text - larger fonts for big table
+        # Column positions with better spacing
+        rank_col = table_x + 40
+        name_col = table_x + 150
+        score_col = table_x + 650
+        
+        # Enhanced table header
+        header_rect = pygame.Rect(table_x, table_start_y, table_width, 60)
+        pygame.draw.rect(screen, (30, 25, 20), header_rect, border_radius=10)
+        pygame.draw.rect(screen, CHAMPION_GOLD, header_rect, 4, border_radius=10)
+        
         rank_header = font_medium.render("RANK", True, CHAMPION_GOLD)
         name_header = font_medium.render("FIGHTER", True, CHAMPION_GOLD)
-        score_header = font_medium.render("POWER SCORE", True, CHAMPION_GOLD)
+        score_header = font_medium.render("POWER", True, CHAMPION_GOLD)
         
-        screen.blit(rank_header, (rank_col_x, col_header_y + 20))
-        screen.blit(name_header, (name_col_x, col_header_y + 20))
-        screen.blit(score_header, (score_col_x, col_header_y + 20))
+        screen.blit(rank_header, (rank_col, table_start_y + 18))
+        screen.blit(name_header, (name_col, table_start_y + 18))
+        screen.blit(score_header, (score_col, table_start_y + 18))
         
-        # Table entries - bigger spacing and fonts
-        entry_start_y = col_header_y + 80
-        entry_height = 50  # Much taller rows
+        # Enhanced table entries - Show only top 5
+        entry_start_y = table_start_y + 70
+        row_height = 65  # Increased for better visual appeal
         
-        for i, entry in enumerate(leaderboard[:8]):
+        for i, entry in enumerate(leaderboard[:5]):
             rank = i + 1
             entry_username = entry["username"]
             score = entry["score"]
             
-            entry_y = entry_start_y + (i * entry_height)
+            entry_y = entry_start_y + (i * row_height)
+            row_rect = pygame.Rect(table_x + 5, entry_y, table_width - 10, row_height - 8)
             
             # Check if current user
             is_current_user = (entry_username == username and abs(score - force) < 10)
             
-            # Row background
-            row_rect = pygame.Rect(header_x + 10, entry_y, header_width - 20, entry_height - 5)
-            
+            # Enhanced row styling with medal colors and effects
             if rank == 1:
-                # Gold background for first place
-                pygame.draw.rect(screen, (60, 50, 20), row_rect, border_radius=8)
-                pygame.draw.rect(screen, CHAMPION_GOLD, row_rect, 3, border_radius=8)
-                text_color = CHAMPION_GOLD
+                row_color = CHAMPION_GOLD
+                text_color = BLACK
+                rank_display = "1"
+                shadow_color = (255, 215, 0, 50)
             elif rank == 2:
-                # Silver background for second place
-                pygame.draw.rect(screen, (45, 45, 45), row_rect, border_radius=8)
-                pygame.draw.rect(screen, SILVER, row_rect, 2, border_radius=8)
-                text_color = SILVER
+                row_color = SILVER  
+                text_color = BLACK
+                rank_display = "2"
+                shadow_color = (192, 192, 192, 50)
             elif rank == 3:
-                # Bronze background for third place
-                pygame.draw.rect(screen, (55, 35, 20), row_rect, border_radius=8)
-                pygame.draw.rect(screen, BRONZE, row_rect, 2, border_radius=8)
-                text_color = BRONZE
-            elif is_current_user:
-                # Highlight current user
-                pygame.draw.rect(screen, (70, 50, 30), row_rect, border_radius=8)
-                pygame.draw.rect(screen, CHAMPION_GOLD, row_rect, 2, border_radius=8)
-                text_color = CHAMPION_GOLD
+                row_color = BRONZE
+                text_color = BLACK
+                rank_display = "3"
+                shadow_color = (205, 127, 50, 50)
             else:
-                # Regular entries
-                bg_color = (35, 30, 25) if i % 2 == 0 else (30, 25, 20)
-                pygame.draw.rect(screen, bg_color, row_rect, border_radius=8)
-                pygame.draw.rect(screen, GYM_STEEL, row_rect, 1, border_radius=8)
-                text_color = WHITE
+                row_color = (240, 240, 240) if not is_current_user else PRO_ORANGE
+                text_color = BLACK
+                rank_display = f"#{rank}"
+                shadow_color = (100, 100, 100, 30)
             
-            # Entry text - bigger font for big table
-            rank_text = font_small.render(f"#{rank}", True, text_color)
-            name_text = font_small.render(entry_username[:15], True, text_color)
-            score_text = font_small.render(str(int(score)), True, text_color)
+            # Row shadow
+            shadow_rect = pygame.Rect(row_rect.x + 3, row_rect.y + 3, row_rect.width, row_rect.height)
+            pygame.draw.rect(screen, shadow_color[:3], shadow_rect, border_radius=12)
             
-            # Position text in columns - adjusted for bigger table
-            screen.blit(rank_text, (rank_col_x, entry_y + 18))
-            screen.blit(name_text, (name_col_x, entry_y + 18))
-            screen.blit(score_text, (score_col_x, entry_y + 18))
+            # Main row
+            pygame.draw.rect(screen, row_color, row_rect, border_radius=12)
+            pygame.draw.rect(screen, BLACK, row_rect, 3, border_radius=12)
+            
+            # Highlight current user with glow effect
+            if is_current_user:
+                glow_rect = pygame.Rect(row_rect.x - 3, row_rect.y - 3, row_rect.width + 6, row_rect.height + 6)
+                pygame.draw.rect(screen, PRO_ORANGE, glow_rect, 2, border_radius=15)
+            
+            # Enhanced row content with larger fonts
+            if rank <= 3:
+                rank_text = font_medium.render(rank_display, True, text_color)
+            else:
+                rank_text = font_medium.render(rank_display, True, text_color)
+            
+            name_text = font_medium.render(entry_username[:18], True, text_color)
+            score_text = font_medium.render(str(int(score)), True, text_color)
+            
+            # Better text positioning with perfect vertical centering
+            text_y_offset = (row_height - 30) // 2
+            screen.blit(rank_text, (rank_col, entry_y + text_y_offset))
+            screen.blit(name_text, (name_col, entry_y + text_y_offset))
+            screen.blit(score_text, (score_col, entry_y + text_y_offset))
     
     else:
-        # No data message
-        no_data_text = font_large.render("NO CHAMPIONS YET - BE THE FIRST!", True, CHAMPION_GOLD)
-        no_data_rect = no_data_text.get_rect(center=(screen_width // 2, table_start_y + 100))
+        # Enhanced "no data" message
+        no_data_bg = pygame.Rect((screen_width - 600) // 2, table_y + 50, 600, 100)
+        pygame.draw.rect(screen, (40, 30, 25), no_data_bg, border_radius=20)
+        pygame.draw.rect(screen, BOXING_RED, no_data_bg, 3, border_radius=20)
+        
+        no_data_text = font_large.render("NO FIGHTERS YET", True, WHITE)
+        be_first_text = font_medium.render("BE THE FIRST CHAMPION!", True, CHAMPION_GOLD)
+        
+        no_data_rect = no_data_text.get_rect(center=(screen_width // 2, table_y + 80))
+        be_first_rect = be_first_text.get_rect(center=(screen_width // 2, table_y + 110))
+        
         screen.blit(no_data_text, no_data_rect)
+        screen.blit(be_first_text, be_first_rect)
+    
+    # Enhanced bottom instruction with animated effect
+    instruction_bg = pygame.Rect((screen_width - 400) // 2, screen_height - 80, 400, 50)
+    # pygame.draw.rect(screen, (20, 15, 15), instruction_bg, border_radius=25)
+    # pygame.draw.rect(screen, WHITE, instruction_bg, 2, border_radius=25)
+    
+    instruction_text = font_medium.render("Press any key to continue...", True, WHITE)
+    instruction_rect = instruction_text.get_rect(center=(screen_width // 2, screen_height - 55))
+    # screen.blit(instruction_text, instruction_rect)
  
 
 def read_serial_data():
@@ -1043,7 +1114,7 @@ def display_animation_screen():
             'tiny': font_tiny
         }
         
-        # Use the proper animation function with sound from punch_animation.py
+        # Use the proper animation function with sound from punch_animation2.py
         animate_punch_score(screen, animation_target_score, screen_width, screen_height, fonts)
         
         print("Animation completed")

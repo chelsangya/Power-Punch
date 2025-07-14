@@ -539,6 +539,17 @@ def display_username_input():
     """Display username input with permanent leaderboard sidebar on right"""
     global current_username, input_active, button_rects
     
+    # Only start wait music if not already playing to avoid restarts during typing
+    if not pygame.mixer.music.get_busy():
+        try:
+            pygame.mixer.music.load("wait_at_0.mp3")
+            pygame.mixer.music.play(-1)  # Loop indefinitely
+            print("Playing wait_at_0.mp3 in loop")
+        except pygame.error as e:
+            print(f"Could not load wait_at_0.mp3: {e}")
+        except FileNotFoundError:
+            print("wait_at_0.mp3 not found")
+    
     # Clear button rects
     button_rects.clear()
     
@@ -611,6 +622,17 @@ def display_username_input():
 def display_initial_screen():
     """Display main game screen with permanent leaderboard sidebar"""
     global current_state, update_screen_timer, button_rects
+    
+    # Continue playing wait_at_0.mp3 if not already playing
+    if not pygame.mixer.music.get_busy():
+        try:
+            pygame.mixer.music.load("wait_at_0.mp3")
+            pygame.mixer.music.play(-1)  # Loop indefinitely
+            print("Playing wait_at_0.mp3 in loop")
+        except pygame.error as e:
+            print(f"Could not load wait_at_0.mp3: {e}")
+        except FileNotFoundError:
+            print("wait_at_0.mp3 not found")
     
     # Clear button rects
     button_rects.clear()
@@ -695,7 +717,7 @@ def display_initial_screen():
     current_state = "initial"
     update_screen_timer = 0
 
-def update_display(fsr1, fsr2, fsr3, average_force):
+def update_display(fsr1, fsr2, average_force):
     """Update display after a punch with enhanced UI and permanent leaderboard"""
     global highest_score, last_update_time, current_state, update_screen_timer, button_rects
     global animation_active, animation_target_score, animation_start_time
@@ -723,6 +745,16 @@ def show_punch_result_screen(average_force):
     
     # Clear button rects
     button_rects.clear()
+    
+    # Play final score sound
+    try:
+        pygame.mixer.music.load("final_score.mp3")
+        pygame.mixer.music.play(0)  # Play once only
+        print("Playing final_score.mp3")
+    except pygame.error as e:
+        print(f"Could not load final_score.mp3: {e}")
+    except FileNotFoundError:
+        print("final_score.mp3 not found")
     
     # Draw boxing gym atmosphere background
     screen.fill((25, 20, 15))
@@ -886,31 +918,24 @@ def read_serial_data():
             line = ser.readline().decode('utf-8').strip()
             if line:
                 parts = line.split(",")
-                if len(parts) == 4:  # Updated to expect 4 parts for 3 sensors
+                if len(parts) == 3:
                     fsr1_str = parts[0].split(": ")[1]
                     fsr2_str = parts[1].split(": ")[1]
-                    fsr3_str = parts[2].split(": ")[1]
                     fsr1 = int(fsr1_str)
                     fsr2 = int(fsr2_str)
-                    fsr3 = int(fsr3_str)
                     
-                    # Calculate average force from all three sensors
-                    valid_sensors = []
-                    if fsr1 > minimum_threshold:
-                        valid_sensors.append(fsr1)
-                    if fsr2 > minimum_threshold:
-                        valid_sensors.append(fsr2)
-                    if fsr3 > minimum_threshold:
-                        valid_sensors.append(fsr3)
-                    
-                    if len(valid_sensors) > 0:
-                        average_force = sum(valid_sensors) / len(valid_sensors)
+                    if fsr1 > minimum_threshold and fsr2 > minimum_threshold:
+                        average_force = (fsr1 + fsr2) / 2
+                    elif fsr1 < minimum_threshold:
+                        average_force = fsr2
+                    elif fsr2 < minimum_threshold:
+                        average_force = fsr1
                     else:
                         continue
                         
-                    print(f"FSR1: {fsr1}, FSR2: {fsr2}, FSR3: {fsr3}, Average force: {average_force}")
+                    print("average force", average_force)
                     if average_force >= 650 and current_state == "initial":
-                        update_display(fsr1, fsr2, fsr3, average_force)
+                        update_display(fsr1, fsr2, average_force)
                         
                 # Reset reconnect attempts on successful read
                 reconnect_attempts = 0
@@ -1004,82 +1029,22 @@ def display_animation_screen():
     try:
         print(f"Starting animation with target score: {animation_target_score}")
         
-        # Simple built-in animation instead of external module
-        animation_duration = 2.0  # 2 seconds
-        start_time = time.time()
-        current_score = 0
+        # Stop wait music when animation starts
+        if pygame.mixer.music.get_busy():
+            pygame.mixer.music.stop()
+            print("Stopped wait_at_0.mp3 - animation starting")
         
-        while True:
-            current_time = time.time()
-            elapsed = current_time - start_time
-            
-            if elapsed >= animation_duration:
-                current_score = animation_target_score
-                break
-            
-            # Calculate current score with easing
-            progress = elapsed / animation_duration
-            eased_progress = 1 - (1 - progress) ** 2
-            current_score = int(animation_target_score * eased_progress)
-            
-            # Clear screen with boxing gym background
-            screen.fill((25, 20, 15))
-            
-            # Title
-            title_text = font_title.render("ANALYZING PUNCH...", True, BOXING_RED)
-            title_rect = title_text.get_rect(center=(screen_width // 2, 100))
-            screen.blit(title_text, title_rect)
-            
-            # Animated score - huge and centered
-            huge_font = pygame.font.Font(None, 200)
-            score_text = huge_font.render(str(current_score), True, WHITE)
-            score_rect = score_text.get_rect(center=(screen_width // 2, screen_height // 2))
-            screen.blit(score_text, score_rect)
-            
-            # Progress indicator
-            progress_text = font_medium.render(f"Calculating force... {int(progress * 100)}%", True, (150, 160, 170))
-            progress_rect = progress_text.get_rect(center=(screen_width // 2, screen_height // 2 + 200))
-            screen.blit(progress_text, progress_rect)
-            
-            # Visual effect - pulsing circle around score
-            pulse_radius = 150 + int(20 * abs(1 - 2 * (elapsed % 0.5) / 0.5))
-            pygame.draw.circle(screen, (100, 100, 100), (screen_width // 2, screen_height // 2), pulse_radius, 3)
-            
-            pygame.display.flip()
-            pygame.time.wait(50)
-            
-            # Handle events
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
+        # Create fonts dictionary for animate_punch_score function
+        fonts = {
+            'title': font_title,
+            'large': font_large,
+            'medium': font_medium,
+            'small': font_small,
+            'tiny': font_tiny
+        }
         
-        # Final flash effect
-        for flash in range(3):
-            screen.fill((25, 20, 15))
-            
-            # Flash between colors
-            flash_color = CHAMPION_GOLD if flash % 2 == 0 else WHITE
-            
-            # Final title
-            final_title = font_title.render("FINAL SCORE!", True, flash_color)
-            final_rect = final_title.get_rect(center=(screen_width // 2, 150))
-            screen.blit(final_title, final_rect)
-            
-            # Final score
-            huge_font = pygame.font.Font(None, 200)
-            final_score = huge_font.render(str(animation_target_score), True, flash_color)
-            final_rect = final_score.get_rect(center=(screen_width // 2, screen_height // 2))
-            screen.blit(final_score, final_rect)
-            
-            pygame.display.flip()
-            pygame.time.wait(250)
-            
-            # Handle quit events during flash
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
+        # Use the proper animation function with sound from punch_animation.py
+        animate_punch_score(screen, animation_target_score, screen_width, screen_height, fonts)
         
         print("Animation completed")
         
@@ -1148,9 +1113,12 @@ while True:
                             update_display(500, 550, 900)
                 elif current_state == "punch_result":
                     # Allow any key to continue from leaderboard screen
+                    pygame.mixer.music.stop()  # Stop final score music
                     current_state = "username_input"
                     current_username = ""
                     input_active = True
+                    # Force music restart when coming from result screen
+                    pygame.mixer.music.stop()
                     display_username_input()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 # Handle mouse clicks on buttons
@@ -1167,9 +1135,12 @@ while True:
 
         # Return to name entering screen after showing score (for auto-timeout)
         if current_state == "punch_result" and time.time() - update_screen_timer > update_screen_display_time:
+            pygame.mixer.music.stop()  # Stop final score music
             current_state = "username_input"
             current_username = ""
             input_active = True
+            # Force music restart when auto-returning from result screen
+            pygame.mixer.music.stop()
             display_username_input()
 
     except KeyboardInterrupt:
