@@ -8,7 +8,7 @@ import threading
 import random
 import math
 from pymongo import MongoClient
-from datetime import datetime
+from datetime import datetime 
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -19,7 +19,7 @@ from punch_animation import animate_punch_score, create_responsive_layout
 
 # Serial setup with error handling
 try:
-    ser = serial.Serial('/dev/cu.usbmodem1301', 9600)
+    ser = serial.Serial('/dev/cu.usbmodem1401', 9600)
     SERIAL_CONNECTED = True
     print("Arduino connected successfully!")
 except Exception as e:
@@ -717,7 +717,7 @@ def display_initial_screen():
     current_state = "initial"
     update_screen_timer = 0
 
-def update_display(fsr1, fsr2, average_force):
+def update_display(fsr1, fsr2, max_force):
     """Update display after a punch with enhanced UI and permanent leaderboard"""
     global highest_score, last_update_time, current_state, update_screen_timer, button_rects
     global animation_active, animation_target_score, animation_start_time
@@ -729,13 +729,13 @@ def update_display(fsr1, fsr2, average_force):
 
     last_update_time = current_time
     
-    # Store score to MongoDB first
+    # Store score to MongoDB first (using max_force as the score)
     if current_username:
-        store_score_to_mongodb(current_username, average_force)
+        store_score_to_mongodb(current_username, max_force)
     
-    # Start animation by setting animation state
+    # Start animation by setting animation state (using max_force)
     animation_active = True
-    animation_target_score = int(average_force)
+    animation_target_score = int(max_force)
     animation_start_time = current_time
     current_state = "animating"
 
@@ -917,25 +917,35 @@ def read_serial_data():
                 
             line = ser.readline().decode('utf-8').strip()
             if line:
-                parts = line.split(",")
-                if len(parts) == 3:
-                    fsr1_str = parts[0].split(": ")[1]
-                    fsr2_str = parts[1].split(": ")[1]
-                    fsr1 = int(fsr1_str)
-                    fsr2 = int(fsr2_str)
-                    
-                    if fsr1 > minimum_threshold and fsr2 > minimum_threshold:
-                        average_force = (fsr1 + fsr2) / 2
-                    elif fsr1 < minimum_threshold:
-                        average_force = fsr2
-                    elif fsr2 < minimum_threshold:
-                        average_force = fsr1
-                    else:
+                # Check if this is the detailed sensor output from Arduino
+                if "FSR 1:" in line and "Average Force:" in line:
+                    # Parse the detailed line: "FSR 1: 123, FSR 2: 456, FSR 3: 789, FSR 4: 012, FSR 5: 345, FSR 6: 678, Average Force: 456"
+                    try:
+                        # Extract all FSR values
+                        fsr_values = []
+                        parts = line.split(", ")
+                        
+                        for part in parts:
+                            if "FSR" in part and ":" in part:
+                                value_str = part.split(": ")[1]
+                                fsr_values.append(int(value_str))
+                        
+                        if len(fsr_values) >= 6:
+                            # Use maximum value from all 6 sensors
+                            max_force = max(fsr_values)
+                            print(f"FSR values: {fsr_values}, Max force: {max_force}")
+                            
+                            if max_force >= 650 and current_state == "initial":
+                                update_display(fsr_values[0], fsr_values[1], max_force)
+                    except (ValueError, IndexError) as e:
+                        print(f"Error parsing sensor data: {e}")
                         continue
                         
-                    print("average force", average_force)
-                    if average_force >= 650 and current_state == "initial":
-                        update_display(fsr1, fsr2, average_force)
+                # Also handle simple numeric output (fallback)
+                elif line.isdigit():
+                    force_value = int(line)
+                    if force_value >= 650 and current_state == "initial":
+                        update_display(force_value, force_value, force_value)
                         
                 # Reset reconnect attempts on successful read
                 reconnect_attempts = 0
@@ -1098,18 +1108,18 @@ while True:
                     # Demo mode: Simulate punches with keyboard
                     elif not SERIAL_CONNECTED:
                         if event.key == pygame.K_SPACE:
-                            # Simulate a random punch
-                            simulated_score = random.randint(650, 1000)
-                            print(f"Demo punch: {simulated_score}")
-                            update_display(simulated_score//2, simulated_score//2, simulated_score)
+                            # Simulate a random punch (using max value)
+                            simulated_max = random.randint(650, 1000)
+                            print(f"Demo punch (max value): {simulated_max}")
+                            update_display(simulated_max//2, simulated_max//2, simulated_max)
                         elif event.key == pygame.K_1:
-                            # Weak punch
+                            # Weak punch (max value)
                             update_display(300, 300, 600)
                         elif event.key == pygame.K_2:
-                            # Medium punch  
+                            # Medium punch (max value)
                             update_display(400, 450, 750)
                         elif event.key == pygame.K_3:
-                            # Strong punch
+                            # Strong punch (max value)
                             update_display(500, 550, 900)
                 elif current_state == "punch_result":
                     # Allow any key to continue from leaderboard screen
